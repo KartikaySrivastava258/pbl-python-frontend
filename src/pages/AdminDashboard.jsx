@@ -8,7 +8,7 @@ function AdminDashboard() {
         <h2>Admin Dashboard</h2>
         <button onClick={logout}>Logout</button>
       </header>
-      <p>Welcome, admin! Manage users, roles, and system settings here.</p>
+      <p>Welcome, Manage users, roles, and system settings here.</p>
     </div>
   );
 }

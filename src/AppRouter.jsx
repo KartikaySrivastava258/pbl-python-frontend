@@ -14,7 +14,7 @@ export default function AppRouter() {
       <Routes>
         <Route path="/" element={<App />} />
         <Route
-          path="/chat/:userId"
+          path="/chat/:userId/:channel"
           element={<ProtectedRoute element={<ChatPage />} roleRequired="student" />}
         />
         <Route

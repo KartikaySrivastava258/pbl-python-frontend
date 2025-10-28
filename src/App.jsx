@@ -1,8 +1,8 @@
-// App.jsx
 import React, { useState, useEffect } from 'react';
 import {
-  Mail, Lock, LogIn, Sun, Moon, ShieldCheck, WifiOff, LogOut, UserCheck, Eye, EyeOff
+  Mail, Lock, LogIn, Sun, Moon, ShieldCheck, WifiOff, LogOut, UserCheck, Eye, EyeOff, MessageSquare, Send, ArrowLeft
 } from 'lucide-react';
+import ChatPage from "./pages/ChatPage";
 
 // IMPORTANT: Change this base URL if your backend is not running at 10.42.0.1:8000.
 const BACKEND_BASE_URL = 'http://10.42.0.1:8000';
@@ -87,8 +87,14 @@ const runtimeStyle = `
 }
 `;
 
+
+
+
 // Main App
 export default function App() {
+  // Page routing state
+  const [page, setPage] = useState('login'); // 'login' or 'chat'
+
   // Theme & form state
   const [isDarkMode, setIsDarkMode] = useState(true); // default to dark (Discord-like)
   const [username, setUsername] = useState('');
@@ -113,6 +119,7 @@ export default function App() {
     localStorage.removeItem('user_data');
     setToken(null);
     setUserData(null);
+    setPage('login'); // Go back to login screen
     setMessage('Logged out and token/user data cleared.');
   };
 
@@ -179,7 +186,20 @@ export default function App() {
     if (message && (message.includes('failed') || message.includes('ERROR') || message.includes('Connection Error') || message.includes('405'))) return 'bg-danger';
     return 'bg-default';
   };
+  
+  // Conditionally render the ChatPage
+  if (page === 'chat') {
+    return <ChatPage 
+        userData={userData} 
+        handleLogout={handleLogout} 
+        setPage={setPage} 
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
+        token={token}
+    />;
+  }
 
+  // Render the Login/Session page by default
   return (
     <>
       <style>{runtimeStyle}</style>
@@ -276,29 +296,36 @@ export default function App() {
 
             {/* Logged-in View */}
             {token && (
-              <div className="session-panel" aria-live="polite">
+              <div className="session-panel card" aria-live="polite">
                 <div className="session-header">
-                  <h2 className="session-title"><ShieldCheck className="mini"/> Session Active</h2>
-                  <p className="session-sub">You are authenticated. Use the actions below.</p>
+                  <ShieldCheck className="session-icon" />
+                  <div>
+                    <h2 className="session-title">Session Active</h2>
+                    <p className="session-sub">You are authenticated. Use the actions below.</p>
+                  </div>
                 </div>
-
                 <div className="session-actions">
-                  <button onClick={testProtected} className="btn success-btn"><ShieldCheck className="btn-icon" /> Test Protected</button>
-                  <button onClick={handleLogout} className="btn danger-btn"><LogOut className="btn-icon" /> Log Out</button>
+                  <button onClick={testProtected} className="btn-primary">
+                    <ShieldCheck className="btn-icon" /> Test Token
+                  </button>
+                  <button onClick={() => setPage('chat')} className="btn-primary">
+                    <MessageSquare className="btn-icon" /> Go to Chat
+                  </button>
+                  <button onClick={handleLogout} className="btn-primary">
+                    <LogOut className="btn-icon" /> Log Out
+                  </button>
                 </div>
-
                 {userData && (
-                  <div className="user-data">
-                    <h4 className="user-data-title"><UserCheck className="mini" /> Decoded User Details</h4>
-                    <div className="user-data-body">
+                  <div className="session-user card">
+                    <h4 className="session-user-title"><UserCheck className="mini" /> Decoded User Details</h4>
+                    <div className="session-user-body">
                       {Object.entries(userData).map(([k, v]) => (
                         <p key={k}><span className="key">{k}:</span> <span className="val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span></p>
                       ))}
                     </div>
                   </div>
                 )}
-
-                <div className="token-block">
+                <div className="session-token card">
                   <strong>Raw Token</strong>
                   <pre className="token-pre">{token}</pre>
                 </div>

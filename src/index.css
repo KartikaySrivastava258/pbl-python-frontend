@@ -1,3 +1,100 @@
+/* === Session Panel === */
+.session-panel.card {
+  margin: 28px auto 0 auto;
+  max-width: 480px;
+  width: 100%;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--card-border);
+  padding: 28px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  transition: box-shadow var(--transition), background var(--transition);
+}
+.session-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 2px;
+}
+.session-icon {
+  width: 34px;
+  height: 34px;
+  color: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 4px 14px var(--glow-start);
+}
+.session-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+.session-sub {
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  font-weight: 500;
+  margin: 2px 0 0 0;
+}
+.session-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+  margin: 10px 0 0 0;
+  flex-wrap: wrap;
+}
+.session-user.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: 0 0 8px var(--glow-end);
+  padding: 14px 12px;
+  width: 100%;
+  margin-bottom: 6px;
+}
+.session-user-title {
+  color: var(--primary);
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.session-user-body {
+  color: var(--text-main);
+  font-size: 0.98rem;
+  font-weight: 500;
+}
+.session-user-body .key {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.session-user-body .val {
+  color: var(--text-main);
+  font-weight: 600;
+}
+.session-token.card {
+  background: var(--input-bg);
+  border-radius: var(--radius);
+  box-shadow: 0 0 8px var(--glow-end);
+  padding: 10px 8px;
+  width: 100%;
+  margin-top: 6px;
+  overflow-x: auto;
+}
+.token-pre {
+  font-size: 0.92rem;
+  color: var(--text-main);
+  background: none;
+  margin: 6px 0 0 0;
+  word-break: break-all;
+}
 /* index.css
    Discord-inspired Login with responsive dark/light mode + glowing button animation
 */
