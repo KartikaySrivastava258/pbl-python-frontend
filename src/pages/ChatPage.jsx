@@ -400,7 +400,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
                     </div>
                   ))
                 )}
-              </div>hmjhjhjkhj
+              </div>
             </div>
           </div>
 
@@ -497,6 +497,32 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
                 // For WhatsApp logic: only own messages are right, all others (including backend) are left
                 const flexDirection = isSystem ? 'row' : isOwn ? 'row-reverse' : 'row';
                 const alignSelf = isSystem ? 'center' : isOwn ? 'flex-end' : 'flex-start';
+
+                // For non-own, non-system messages, show 'User <userId>' as name and only the message in double quotes
+                let displayName = '';
+                let displayText = msg.text;
+                if (!isOwn && !isSystem) {
+                  // Try to extract userId from msg or token
+                  let userId = '';
+                  if (msg.userId) {
+                    userId = msg.userId;
+                  } else if (msg.user && msg.user !== 'Other') {
+                    userId = msg.user;
+                  } else if (userData?.sub) {
+                    userId = userData.sub;
+                  }
+                  displayName = `User ${userId}`;
+                  // Extract message in double quotes if present
+                  const match = typeof msg.text === 'string' ? msg.text.match(/"([^"]*)"/) : null;
+                  if (match && match[1]) {
+                    displayText = match[1];
+                  }
+                } else if (isSystem) {
+                  displayName = 'System';
+                } else if (isOwn) {
+                  displayName = userData?.email || 'You';
+                }
+
                 return (
                   <div key={idx} style={{
                     display: 'flex',
@@ -508,7 +534,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
                   }}>
                     {!isSystem && (
                       <div style={{ width: 40, height: 40, borderRadius: '50%', background: isOwn ? 'var(--primary)' : 'var(--secondary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18 }}>
-                        {isOwn ? (userData?.email ? userData.email.slice(0, 2).toUpperCase() : 'YO') : (msg.user ? msg.user.slice(0, 2).toUpperCase() : 'US')}
+                        {isOwn ? (userData?.email ? userData.email.slice(0, 2).toUpperCase() : 'YO') : 'US'}
                       </div>
                     )}
                     <div style={{
@@ -525,9 +551,9 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
                       margin: isSystem ? '0 auto' : undefined,
                     }}>
                       <div style={{ fontWeight: 600, color: isSystem ? 'var(--text-muted)' : isOwn ? 'var(--primary-glow)' : 'var(--foreground)', marginBottom: 2 }}>
-                        {isSystem ? 'System' : isOwn ? userData?.email || 'You' : msg.user || 'User'}
+                        {(!isOwn && !isSystem) ? displayName : displayName}
                       </div>
-                      <div>{msg.text}</div>
+                      <div>{(!isOwn && !isSystem) ? displayText : msg.text}</div>
                       <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 6 }}>{new Date(msg.id).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                     </div>
                     {!isSystem && (
