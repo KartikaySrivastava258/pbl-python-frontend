@@ -110,11 +110,9 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
   const { channel = 'general', userId: paramUserId } = useParams();
   const navigate = useNavigate();
 
-  // Ensure userId and token are always derived from props, not just route params
   const effectiveUserId = userData?.sub || paramUserId;
   const effectiveToken = token;
 
-  // Inject runtime CSS variables once
   useEffect(() => {
     const styleEl = document.createElement('style');
     styleEl.setAttribute('data-generated', 'chat-runtime-style');
@@ -188,7 +186,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
     console.log(effectiveToken, effectiveUserId);
     
     if (!effectiveToken || !effectiveUserId) {
-      setChatStatus('Authentication details are missing (no token or user ID).');
+      setChatStatus('Authentication details are missing (no token or user ID).'); 
       toast.error('Missing authentication details', { description: 'No token or user ID', duration: 4000 });
       return;
     }
@@ -223,28 +221,54 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
       };
 
       ws.onmessage = (event) => {
+        // Try to parse as JSON, fallback to plain text
+        let data = null;
+        let isJson = false;
         try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'user_list' && Array.isArray(data.users)) {
-            setOnlineUsers(data.users);
-            toast.info('Online users updated', { duration: 2000 });
-          } else {
-            const incoming = { id: Date.now(), ...data };
-            setMessages(prev => [...prev, incoming]);
-            // Mention check - using email
-            if (incoming.text && incoming.text.includes('@' + (userData?.email || ''))) {
-              toast.info('You were mentioned!', { description: incoming.text, duration: 3500 });
-            } else if (incoming.text && /:[^\s]+:/.test(incoming.text)) {
-              toast.message('Emoji reaction!', { description: incoming.text, duration: 2500 });
-            } else {
-              toast.message('New message received', { description: incoming.text || 'New event', duration: 2500 });
-            }
+          data = JSON.parse(event.data);
+          isJson = true;
+        } catch (e) {
+          data = event.data;
+        }
+
+        // Always extract and log the message text
+        let extractedText = '';
+        if (isJson && data && typeof data === 'object') {
+          if (typeof data.text === 'string') {
+            extractedText = data.text;
+          } else if (typeof data.text === 'object' && data.text !== null && typeof data.text.text === 'string') {
+            extractedText = data.text.text;
           }
-        } catch (error) {
-          // Display non-JSON backend message as if from another user (left side)
-          console.log('[WS] Non-JSON message received:', event.data);
+        } else if (typeof data === 'string') {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed && typeof parsed.text === 'string') {
+              extractedText = parsed.text;
+            } else {
+              extractedText = data;
+            }
+          } catch {
+            extractedText = data;
+          }
+        }
+        if (extractedText) {
+          console.log('Extracted message:', extractedText);
+        }
+
+        if (isJson && data && typeof data === 'object') {
+          console.log('[WS DEBUG] Received JSON data:', data);
+          console.log(typeof data);
+          // console.log the message field of data json 
+          
+          
+          toast.message('New messaage received', { description: JSON.stringify(data.message), duration: 2500 });
+
+          //create message blob with the data.message
+          setMessages((prev) => [...prev, { id: Date.now(), user: data.id || 'Other', text: data.message, channel: selectedChannel }]);
+        } else {
+          // If plain text, treat as a message from another user (left side)
           setMessages((prev) => {
-            const updated = [...prev, { id: Date.now(), user: 'Other', text: event.data, channel: selectedChannel }];
+            const updated = [...prev, { id: Date.now(), user: 'Other', text: extractedText, channel: selectedChannel }];
             // Only print if extracted id from token does not match current id
             const extractedId = userData?.sub;
             const currentId = effectiveUserId;
@@ -253,7 +277,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
             }
             return updated;
           });
-          toast.warning('Non-JSON message received', { description: event.data, duration: 2500 });
+          toast.warning('Non-JSON message received', { description: extractedText, duration: 2500 });
         }
       };
 
@@ -498,24 +522,40 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
                 const flexDirection = isSystem ? 'row' : isOwn ? 'row-reverse' : 'row';
                 const alignSelf = isSystem ? 'center' : isOwn ? 'flex-end' : 'flex-start';
 
-                // For non-own, non-system messages, show 'User <userId>' as name and only the message in double quotes
+                // For non-own, non-system messages, show 'User [userId]' and the value of the 'text' property
                 let displayName = '';
                 let displayText = msg.text;
                 if (!isOwn && !isSystem) {
-                  // Try to extract userId from msg or token
+                  // Extract userId from msg.userId or msg.user
                   let userId = '';
                   if (msg.userId) {
                     userId = msg.userId;
                   } else if (msg.user && msg.user !== 'Other') {
                     userId = msg.user;
-                  } else if (userData?.sub) {
-                    userId = userData.sub;
+                  } else {
+                    userId = 'Unknown';
                   }
                   displayName = `User ${userId}`;
-                  // Extract message in double quotes if present
-                  const match = typeof msg.text === 'string' ? msg.text.match(/"([^"]*)"/) : null;
-                  if (match && match[1]) {
-                    displayText = match[1];
+                  // If msg.text is an object, extract its 'text' property
+                  if (typeof msg.text === 'object' && msg.text !== null && typeof msg.text.text === 'string') {
+                    displayText = msg.text.text;
+                  } else if (typeof msg.text === 'string') {
+                    try {
+                      const parsed = JSON.parse(msg.text);
+                      if (parsed && typeof parsed.text === 'string') {
+                        displayText = parsed.text;
+                      } else {
+                        displayText = msg.text;
+                      }
+                    } catch {
+                      displayText = msg.text;
+                    }
+                  } else {
+                    displayText = '';
+                  }
+                  // Log to console: User [userId]: [displayText]
+                  if (displayText && userId !== 'Unknown') {
+                    console.log(`User ${userId}: ${displayText}`);
                   }
                 } else if (isSystem) {
                   displayName = 'System';

@@ -93,7 +93,7 @@ const runtimeStyle = `
 // Main App
 export default function App() {
   // Page routing state
-  const [page, setPage] = useState('login'); // 'login' or 'chat'
+  const [page, setPage] = useState(' '); // 'login' or 'chat'
 
   // Theme & form state
   const [isDarkMode, setIsDarkMode] = useState(true); // default to dark (Discord-like)
