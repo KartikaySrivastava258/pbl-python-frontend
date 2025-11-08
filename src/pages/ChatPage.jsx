@@ -1,4 +1,4 @@
-// src/pages/ChatPage.jsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -8,10 +8,8 @@ import { Mail, Lock, LogIn, Sun, Moon, ShieldCheck, WifiOff, LogOut, UserCheck, 
 import { toast, Toaster } from 'sonner';
 import EmojiPicker from 'emoji-picker-react';
 
-// IMPORTANT: Change this base URL if your backend is not running at the given IP:PORT.
 const BACKEND_BASE_URL = 'http://10.42.0.1:8000';
 
-// Small helper: decode a JWT's payload
 const decodeJwtToken = (token) => {
   try {
     if (!token) return null;
@@ -35,12 +33,10 @@ const decodeJwtToken = (token) => {
   }
 };
 
-// A small Zod schema for message validation
 const messageSchema = z.object({
   message: z.string().min(1, 'Message cannot be empty').max(500, 'Message too long'),
 });
 
-// Inline CSS variables and a couple supporting CSS rules injected at runtime
 const runtimeStyle = `
 :root{
   --discord-blurple:#5865F2;
@@ -74,7 +70,7 @@ const runtimeStyle = `
 body { margin: 0; font-family: var(--font-family); background: var(--background); }
 `;
 
-/* ---------- Small inline SVG icons ---------- */
+
 // BellIcon
 function BellIcon(props) {
   return (
@@ -105,7 +101,6 @@ function SettingsIcon(props) {
   );
 }
 
-/* ---------- ChatPage Component ---------- */
 function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDarkMode }) {
   const { channel = 'general', userId: paramUserId } = useParams();
   const navigate = useNavigate();
@@ -145,7 +140,6 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
     }
   });
 
-  // Persist pinned messages to localStorage
   useEffect(() => {
     try {
       localStorage.setItem('pinnedMessages', JSON.stringify(pinnedMessages));
@@ -173,7 +167,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
     }
   };
 
-  // Emoji picker handler - emojiData object includes `emoji` property
+  // Emoji picker handler
   const handleEmojiClick = (emojiObject, event) => {
     const curr = getValues('message') || '';
     const next = curr + (emojiObject?.emoji || '');
@@ -197,7 +191,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
       return;
     }
 
-    // Build a ws URL from BACKEND_BASE_URL (http://host:port)
+    //BACKEND_BASE_URL (http://host:port)
     const wsDomain = BACKEND_BASE_URL.replace(/^https?:\/\//, '');
     const wsBaseUrl = `ws://${wsDomain}/user/${encodeURIComponent(effectiveUserId)}/websocketTest`;
     const fullUrl = `${wsBaseUrl}?token=${encodeURIComponent(effectiveToken)}&user_id=${encodeURIComponent(effectiveUserId)}`;
@@ -221,7 +215,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
       };
 
       ws.onmessage = (event) => {
-        // Try to parse as JSON, fallback to plain text
+        // Try to parse
         let data = null;
         let isJson = false;
         try {
@@ -231,7 +225,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
           data = event.data;
         }
 
-        // Always extract and log the message text
+        // Extraction
         let extractedText = '';
         if (isJson && data && typeof data === 'object') {
           if (typeof data.text === 'string') {
@@ -258,7 +252,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
         if (isJson && data && typeof data === 'object') {
           console.log('[WS DEBUG] Received JSON data:', data);
           console.log(typeof data);
-          // console.log the message field of data json 
+         
           
           
           toast.message('New messaage received', { description: JSON.stringify(data.message), duration: 2500 });
@@ -266,7 +260,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
           //create message blob with the data.message
           setMessages((prev) => [...prev, { id: Date.now(), user: data.id || 'Other', text: data.message, channel: selectedChannel }]);
         } else {
-          // If plain text, treat as a message from another user (left side)
+      
           setMessages((prev) => {
             const updated = [...prev, { id: Date.now(), user: 'Other', text: extractedText, channel: selectedChannel }];
             // Only print if extracted id from token does not match current id
@@ -514,19 +508,19 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
               <div style={{ textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 16, marginTop: 40 }}>No messages yet. Start the conversation!</div>
             ) : (
               messages.filter(msg => msg.channel === selectedChannel).map((msg, idx) => {
-                // WhatsApp-like alignment: own messages right, others left, system center
+              
                 const isOwn = msg.user === 'You' || (userData?.email && msg.user === userData.email);
                 const isSystem = msg.user === 'System';
                 const isPinned = pinnedMessages.some(m => m.id === msg.id);
-                // For WhatsApp logic: only own messages are right, all others (including backend) are left
+               
                 const flexDirection = isSystem ? 'row' : isOwn ? 'row-reverse' : 'row';
                 const alignSelf = isSystem ? 'center' : isOwn ? 'flex-end' : 'flex-start';
 
-                // For non-own, non-system messages, show 'User [userId]' and the value of the 'text' property
+             
                 let displayName = '';
                 let displayText = msg.text;
                 if (!isOwn && !isSystem) {
-                  // Extract userId from msg.userId or msg.user
+                
                   let userId = '';
                   if (msg.userId) {
                     userId = msg.userId;
@@ -536,7 +530,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
                     userId = 'Unknown';
                   }
                   displayName = `User ${userId}`;
-                  // If msg.text is an object, extract its 'text' property
+                  
                   if (typeof msg.text === 'object' && msg.text !== null && typeof msg.text.text === 'string') {
                     displayText = msg.text.text;
                   } else if (typeof msg.text === 'string') {
@@ -553,7 +547,7 @@ function ChatPage({ userData, token, handleLogout, setPage, isDarkMode, toggleDa
                   } else {
                     displayText = '';
                   }
-                  // Log to console: User [userId]: [displayText]
+                  // Log to console
                   if (displayText && userId !== 'Unknown') {
                     console.log(`User ${userId}: ${displayText}`);
                   }

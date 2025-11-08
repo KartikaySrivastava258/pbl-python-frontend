@@ -1,4 +1,4 @@
-/* Discord-inspired dark theme tokens using HSL */
+
 :root {
   --background: hsl(224, 71%, 4%);
   --foreground: hsl(213, 31%, 91%);

@@ -3,13 +3,13 @@ import {
   Mail, Lock, LogIn, Sun, Moon, ShieldCheck, WifiOff, LogOut, UserCheck, Eye, EyeOff, MessageSquare, Send, ArrowLeft
 } from 'lucide-react';
 import ChatPage from "./pages/ChatPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
-// IMPORTANT: Change this base URL if your backend is not running at 10.42.0.1:8000.
 const BACKEND_BASE_URL = 'http://10.42.0.1:8000';
 const LOGIN_URL = `${BACKEND_BASE_URL}/login`;
 const PROTECTED_URL = `${BACKEND_BASE_URL}/login`;
 
-// Decode JWT helper (unchanged behavior)
+// Decode JWT 
 const decodeJwtToken = (token) => {
   try {
     if (!token) return null;
@@ -32,7 +32,7 @@ const decodeJwtToken = (token) => {
   }
 };
 
-// Robust sendRequest with exponential backoff (keeps behavior)
+// Robust sendRequest
 const sendRequest = async (url, options) => {
   let attempts = 0;
   const maxAttempts = 3;
@@ -66,7 +66,6 @@ const sendRequest = async (url, options) => {
   }
 };
 
-// Inline small injection of CSS variables for runtime theme toggles (keeps old approach)
 const runtimeStyle = `
 :root{
   --discord-blurple:#5865F2;
@@ -93,7 +92,7 @@ const runtimeStyle = `
 // Main App
 export default function App() {
   // Page routing state
-  const [page, setPage] = useState(' '); // 'login' or 'chat'
+  const [page, setPage] = useState(' '); // 'login', 'chat', or 'admin'
 
   // Theme & form state
   const [isDarkMode, setIsDarkMode] = useState(true); // default to dark (Discord-like)
@@ -107,7 +106,6 @@ export default function App() {
   });
   const [message, setMessage] = useState('');
 
-  // apply body class for theme
   useEffect(() => {
     document.body.className = isDarkMode ? 'discord-dark' : 'discord-light';
   }, [isDarkMode]);
@@ -147,11 +145,12 @@ export default function App() {
       localStorage.setItem('access_token', newAccessToken);
       localStorage.setItem('user_data', JSON.stringify(decodedData));
       setToken(newAccessToken);
-      setUserData(decodedData);
-
-      setMessage(`Login successful! Logged in as: ${decodedData.role || 'N/A'}. Token and user data saved.`);
-      setUsername('');
-      setPassword('');
+  setUserData(decodedData);
+  console.log('Decoded userData after login:', decodedData);
+  console.log('Decoded userData after login:', decodedData);
+  setMessage(`Login successful! Logged in as: ${decodedData.role || 'N/A'}. Token and user data saved.`);
+  setUsername('');
+  setPassword('');
     } catch (error) {
       setMessage(`Login failed: ${error.message}`);
       setToken(null);
@@ -187,7 +186,7 @@ export default function App() {
     return 'bg-default';
   };
   
-  // Conditionally render the ChatPage
+
   if (page === 'chat') {
     return <ChatPage 
         userData={userData} 
@@ -199,7 +198,11 @@ export default function App() {
     />;
   }
 
-  // Render the Login/Session page by default
+  if (page === 'admin') {
+    return <AdminDashboard />;
+  }
+
+  //the Login/Session page by default
   return (
     <>
       <style>{runtimeStyle}</style>
@@ -314,6 +317,11 @@ export default function App() {
                   <button onClick={handleLogout} className="btn-primary">
                     <LogOut className="btn-icon" /> Log Out
                   </button>
+                    {userData && userData.role === 'sys_admin' && (
+                      <button onClick={() => setPage('admin')} className="btn-primary">
+                        <ShieldCheck className="btn-icon" /> Admin Dashboard
+                      </button>
+                    )}
                 </div>
                 {userData && (
                   <div className="session-user card">
